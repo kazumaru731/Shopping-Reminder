@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Auth
 
 struct ListReminderSettingsView: View {
     @Binding var list: ShoppingList
@@ -44,17 +45,35 @@ struct ListReminderSettingsView: View {
         if let weekday = list.wrappedValue.reminderInterval?.weekday {
             _selectedWeekday = State(initialValue: weekday)
         }
+        
+        _listName = State(initialValue: list.wrappedValue.name)
+    }
+    
+    @State private var listName: String
+    
+    private var isOwner: Bool {
+        list.ownerId == SupabaseService.shared.currentUser?.id
+    }
+    
+    private var canEdit: Bool {
+        isOwner || (list.allowMemberEdit ?? false)
     }
     
     var body: some View {
         NavigationView {
             Form {
+                Section(header: Text("基本設定")) {
+                    TextField("リスト名", text: $listName)
+                        .disabled(!canEdit)
+                }
+                
                 Section(header: Text("リマインド頻度")) {
                     Picker("頻度", selection: $notificationType) {
                         ForEach(notificationTypes, id: \.1) { label, value in
                             Text(label).tag(value)
                         }
                     }
+                    .disabled(!canEdit)
                     
                     if notificationType == "weekly" {
                         Picker("曜日", selection: $selectedWeekday) {
@@ -63,14 +82,17 @@ struct ListReminderSettingsView: View {
                             }
                         }
                         .pickerStyle(.segmented)
+                        .disabled(!canEdit)
                     }
                     
                     if notificationType == "once" {
                         DatePicker("通知日時", selection: $reminderTime, displayedComponents: [.date, .hourAndMinute])
                             .datePickerStyle(.wheel)
+                            .disabled(!canEdit)
                     } else if notificationType != "none" {
                         DatePicker("通知時間", selection: $reminderTime, displayedComponents: [.hourAndMinute])
                             .datePickerStyle(.wheel)
+                            .disabled(!canEdit)
                     }
                 }
                 
@@ -85,6 +107,7 @@ struct ListReminderSettingsView: View {
                             }
                         }
                     ))
+                    .disabled(!canEdit)
                     
                     ForEach(viewModel.members) { member in
                         Button(action: {
@@ -96,12 +119,34 @@ struct ListReminderSettingsView: View {
                         }) {
                             HStack {
                                 Text(member.displayName ?? "名前なし")
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(canEdit ? .primary : .secondary)
                                 Spacer()
                                 if selectedMemberIds.contains(member.id) {
                                     Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(canEdit ? .blue : .secondary)
                                 }
+                            }
+                        }
+                        .disabled(!canEdit)
+                    }
+                }
+                
+                if isOwner {
+                    Section(header: Text("権限設定")) {
+                        Toggle("他のメンバーの編集を許可する", isOn: Binding(
+                            get: { list.allowMemberEdit ?? false },
+                            set: { list.allowMemberEdit = $0 }
+                        ))
+                    }
+                    
+                    Section {
+                        Button(role: .destructive) {
+                            deleteList()
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Text("リストを削除")
+                                Spacer()
                             }
                         }
                     }
@@ -143,14 +188,23 @@ struct ListReminderSettingsView: View {
             weekday: notificationType == "weekly" ? selectedWeekday : nil
         )
         
-        // ローカルの状態を更新する（これにより ItemListView の list が更新され、次のアイテム追加時のデフォルトになる）
+        // ローカルの状態を更新する
         var updatedList = list
+        updatedList.name = listName
         updatedList.reminderInterval = interval
         updatedList.reminderTargets = Array(selectedMemberIds)
         self.list = updatedList
         
         Task {
+            await viewModel.updateList(list: list)
             await viewModel.updateReminder(list: list, interval: interval, targets: Array(selectedMemberIds))
+            dismiss()
+        }
+    }
+    
+    private func deleteList() {
+        Task {
+            await viewModel.deleteList(list: list)
             dismiss()
         }
     }
@@ -167,12 +221,29 @@ class ListReminderSettingsViewModel: ObservableObject {
         }
     }
     
+    func updateList(list: ShoppingList) async {
+        do {
+            try await SupabaseService.shared.updateList(list: list)
+        } catch {
+            print("Failed to update list: \(error)")
+        }
+    }
+    
     func updateReminder(list: ShoppingList, interval: NotificationInterval, targets: [UUID]) async {
         do {
             try await SupabaseService.shared.updateListReminder(listId: list.id, interval: interval, targets: targets)
             await NotificationManager.shared.syncAllNotifications()
         } catch {
             print("Failed to update reminder: \(error)")
+        }
+    }
+    
+    func deleteList(list: ShoppingList) async {
+        do {
+            try await SupabaseService.shared.deleteList(id: list.id)
+            await NotificationManager.shared.syncAllNotifications()
+        } catch {
+            print("Failed to delete list: \(error)")
         }
     }
 }

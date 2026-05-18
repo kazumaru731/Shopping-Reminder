@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プライバシーポリシー - Shopping Reminder</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            line-height: 1.7;
+        }
+        header {
+            background: #fff;
+            border-bottom: 1px solid #d2d2d7;
+            padding: 20px 24px;
+            position: sticky;
+            top: 0;
+        }
+        header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+        header p {
+            font-size: 13px;
+            color: #6e6e73;
+            margin-top: 2px;
+        }
+        main {
+            max-width: 720px;
+            margin: 40px auto;
+            padding: 0 24px 60px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        h2 {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f5;
+        }
+        p { font-size: 15px; color: #3a3a3c; margin-bottom: 10px; }
+        ul {
+            list-style: none;
+            margin: 8px 0;
+        }
+        ul li {
+            font-size: 15px;
+            color: #3a3a3c;
+            padding: 6px 0 6px 20px;
+            position: relative;
+            border-bottom: 1px solid #f5f5f7;
+        }
+        ul li:last-child { border-bottom: none; }
+        ul li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #0071e3;
+            font-weight: bold;
+        }
+        .badge {
+            display: inline-block;
+            background: #f0f7ff;
+            color: #0071e3;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .updated {
+            text-align: center;
+            font-size: 13px;
+            color: #6e6e73;
+            margin-top: 40px;
+        }
+        a { color: #0071e3; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🛒 Shopping Reminder</h1>
+        <p>プライバシーポリシー</p>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>はじめに</h2>
+            <p>
+                Shopping Reminder（以下「本アプリ」）は、ユーザーのプライバシーを尊重します。
+                本プライバシーポリシーは、本アプリがどのような情報を収集し、
+                どのように利用するかについて説明するものです。
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>収集する情報</h2>
+            <span class="badge">あなたが提供する情報</span>
+            <ul>
+                <li>メールアドレス（アカウント登録・認証に使用）</li>
+                <li>表示名（グループ内での識別に使用）</li>
+                <li>お買い物リスト、アイテム情報（アプリの中核機能）</li>
+                <li>グループ情報（共同利用のため）</li>
+                <li>アイテムに添付された画像（任意）</li>
+            </ul>
+
+            <span class="badge" style="margin-top: 16px;">自動的に収集される情報</span>
+            <ul>
+                <li>プッシュ通知トークン（通知送信のためのデバイス識別子）</li>
+                <li>端末識別子（Vendor Identifier / IDFV）※広告目的には使用しません</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>情報の利用目的</h2>
+            <ul>
+                <li>アプリのコア機能（リスト管理・グループ共有）の提供</li>
+                <li>グループメンバーへのプッシュ通知の送信</li>
+                <li>アカウントの認証・セキュリティ管理</li>
+                <li>アプリの改善・不具合の調査</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>情報の保存と管理</h2>
+            <p>
+                収集した情報は、<strong>Supabase</strong>（米国）のサーバーに暗号化された状態で保存されます。
+                Supabaseのプライバシーポリシーについては
+                <a href="https://supabase.com/privacy" target="_blank">こちら</a>をご参照ください。
+            </p>
+            <p>
+                アプリ内の画像データは Supabase Storage に保存されます。
+                購入済みマークをつけたアイテムは、一定期間後に自動的に削除されます。
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>第三者への情報提供</h2>
+            <p>
+                収集した個人情報を、法律に基づく場合を除き、
+                第三者へ販売・提供・共有することはありません。
+            </p>
+            <p>
+                グループ機能において、あなたが入力した表示名やアイテム情報は、
+                同一グループに参加している他のメンバーに表示されます。
+                これはアプリの機能上、不可欠な情報共有です。
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>データの削除</h2>
+            <p>
+                アプリ内の「設定」>「アカウントを削除」から、
+                お客様のアカウントおよび関連するすべてのデータ
+                （リスト、アイテム、グループ情報、プッシュトークンを含む）を
+                完全に削除できます。
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>お子様のプライバシー</h2>
+            <p>
+                本アプリは13歳未満のお子様を対象としておりません。
+                13歳未満の方から意図せず個人情報を収集した場合は、
+                速やかに削除対応を行います。
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>お問い合わせ</h2>
+            <p>
+                プライバシーポリシーに関するご質問やご不明点は、
+                以下のメールアドレスまでお気軽にご連絡ください。
+            </p>
+            <p>
+                <a href="mailto:support@example.com">support@example.com</a>
+                <!-- TODO: 実際のサポートメールアドレスに変更してください -->
+            </p>
+        </div>
+
+        <p class="updated">最終更新日：2026年5月18日</p>
+    </main>
+</body>
+</html>

@@ -15,6 +15,16 @@ struct ItemListView: View {
     
     var body: some View {
         List {
+            if viewModel.isLoading {
+                Section {
+                    HStack {
+                        Spacer()
+                        ProgressView("アイテムを読み込み中...")
+                        Spacer()
+                    }
+                }
+            }
+            
             Section(header: Text("未購入")) {
                 ForEach(viewModel.items.filter { !$0.isPurchased }) { item in
                     NavigationLink(destination: ItemDetailView(item: item, groupId: list.groupId)) {
@@ -24,12 +34,15 @@ struct ItemListView: View {
                             Task { await viewModel.togglePlanning(item: item) }
                         })
                     }
+                    .deleteDisabled(!(item.creatorId == SupabaseService.shared.currentUser?.id || (item.allowCollaboratorEdit ?? false)))
                 }
                 .onDelete { indexSet in
                     let unpurchasedItems = viewModel.items.filter { !$0.isPurchased }
                     indexSet.forEach { index in
                         let item = unpurchasedItems[index]
-                        Task { await viewModel.deleteItem(item: item) }
+                        if item.creatorId == SupabaseService.shared.currentUser?.id || (item.allowCollaboratorEdit ?? false) {
+                            Task { await viewModel.deleteItem(item: item) }
+                        }
                     }
                 }
             }
@@ -61,22 +74,29 @@ struct ItemListView: View {
                             .buttonStyle(BorderlessButtonStyle())
                         }
                     }
+                    .deleteDisabled(!(item.creatorId == SupabaseService.shared.currentUser?.id || (item.allowCollaboratorEdit ?? false)))
                 }
                 .onDelete { indexSet in
                     let purchasedItems = viewModel.items.filter { $0.isPurchased }
                     indexSet.forEach { index in
                         let item = purchasedItems[index]
-                        Task { await viewModel.deleteItem(item: item) }
+                        // 自分が作成者か、編集が許可されている場合のみ削除可能
+                        if item.creatorId == SupabaseService.shared.currentUser?.id || (item.allowCollaboratorEdit ?? false) {
+                            Task { await viewModel.deleteItem(item: item) }
+                        }
                     }
                 }
             }
+        }
+        .refreshable {
+            await viewModel.loadItems(listId: list.id)
         }
         .navigationTitle(list.name)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack {
                     Button(action: { showingReminderSettings = true }) {
-                        Image(systemName: "bell")
+                        Image(systemName: "gearshape")
                     }
                     Button(action: { showingAddItemSheet = true }) {
                         Image(systemName: "plus.circle.fill")
@@ -122,9 +142,26 @@ struct ItemRow: View {
                     }
                     
                     if let due = item.dueDate {
-                        Text("• 期限: \(due, style: .date)")
+                        Text("• 期限: \(due.japaneseFormatted())")
                             .font(.caption2)
-                            .foregroundColor(.red)
+                            .foregroundColor(dueDateColor(due: due))
+                    } else {
+                        Text("• 期限: 期限なし")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack(spacing: 8) {
+                        if item.linkUrl != nil {
+                            Image(systemName: "link")
+                                .font(.caption2)
+                                .foregroundColor(.blue)
+                        }
+                        if item.imageUrl != nil {
+                            Image(systemName: "photo")
+                                .font(.caption2)
+                                .foregroundColor(.purple)
+                        }
                     }
                 }
             }
@@ -144,33 +181,66 @@ struct ItemRow: View {
             .buttonStyle(BorderlessButtonStyle()) // タップ範囲をボタンのみに限定
         }
     }
+    
+    private func dueDateColor(due: Date) -> Color {
+        let now = Date()
+        let timeInterval = due.timeIntervalSince(now)
+        let hoursRemaining = timeInterval / 3600
+        
+        // UserDefaults から設定を取得 (デフォルト値: 注意24時間、緊急5時間)
+        let warningHours = Double(UserDefaults.standard.object(forKey: "deadline_warning_hours") as? Int ?? 24)
+        let criticalHours = Double(UserDefaults.standard.object(forKey: "deadline_critical_hours") as? Int ?? 5)
+        
+        if hoursRemaining < 0 {
+            return .red // 期限切れ
+        } else if hoursRemaining <= criticalHours {
+            return .red // 緊急
+        } else if hoursRemaining <= warningHours {
+            return .yellow // 注意
+        } else {
+            return .secondary // 余裕あり
+        }
+    }
 }
 
+@MainActor
 class ItemListViewModel: ObservableObject {
     @Published var items: [Item] = []
+    @Published var isLoading = false
+    private var isFirstLoad = true
     private var channel: RealtimeChannelV2?
     
-    func loadItems(listId: UUID) async {
+    func loadItems(listId: UUID, showLoading: Bool = false) async {
+        // 初回ロード時のみ、または明示的に要求された場合のみインジケーターを表示
+        if isFirstLoad || showLoading {
+            self.isLoading = true
+            isFirstLoad = false
+        }
+        defer { self.isLoading = false }
+        
         do {
-            self.items = try await SupabaseService.shared.fetchItems(listId: listId)
+            let fetchedItems = try await SupabaseService.shared.fetchItems(listId: listId)
+            self.items = fetchedItems
+            #if DEBUG
+            print("DEBUG: Items loaded: \(fetchedItems.count) items")
+            #endif
             await NotificationManager.shared.syncAllNotifications()
         } catch {
-            print("Error: \(error)")
+            #if DEBUG
+            print("DEBUG: Error loading items: \(error)")
+            #endif
         }
     }
     
-    func addItem(listId: UUID, name: String, dueDate: Date?, interval: NotificationInterval?, targets: [UUID]?) async {
+    // ... addItem, deleteItem, togglePurchased, togglePlanning は変更なし ...
+    func addItem(listId: UUID, name: String, dueDate: Date?, interval: NotificationInterval?, targets: [UUID]?, linkUrl: String? = nil, imageUrl: String? = nil) async {
         do {
-            try await SupabaseService.shared.addItem(
-                listId: listId, 
-                name: name, 
-                dueDate: dueDate,
-                interval: interval,
-                targets: targets
-            )
+            try await SupabaseService.shared.addItem(listId: listId, name: name, dueDate: dueDate, interval: interval, targets: targets, linkUrl: linkUrl, imageUrl: imageUrl)
             await loadItems(listId: listId)
         } catch {
+            #if DEBUG
             print("Error adding item: \(error)")
+            #endif
         }
     }
     
@@ -179,7 +249,9 @@ class ItemListViewModel: ObservableObject {
             try await SupabaseService.shared.deleteItem(id: item.id)
             await loadItems(listId: item.listId)
         } catch {
+            #if DEBUG
             print("Error deleting item: \(error)")
+            #endif
         }
     }
     
@@ -188,7 +260,9 @@ class ItemListViewModel: ObservableObject {
             try await SupabaseService.shared.updateItemStatus(item: item, isPurchased: !item.isPurchased)
             await loadItems(listId: item.listId)
         } catch {
+            #if DEBUG
             print("Error toggling status: \(error)")
+            #endif
         }
     }
     
@@ -197,11 +271,13 @@ class ItemListViewModel: ObservableObject {
             try await SupabaseService.shared.togglePlanning(item: item)
             await loadItems(listId: item.listId)
         } catch {
+            #if DEBUG
             print("Error toggling planning: \(error)")
+            #endif
         }
     }
-    
-    // リアルタイム購読
+
+    // リアルタイム購読の強化
     func subscribeToChanges(listId: UUID) async {
         let client = SupabaseService.shared.client
         let channel = client.channel("list-\(listId.uuidString)")
@@ -210,18 +286,48 @@ class ItemListViewModel: ObservableObject {
             AnyAction.self,
             schema: "public",
             table: "items",
-            filter: .eq("list_id", value: listId.uuidString)
+            filter: RealtimePostgresFilter.eq("list_id", value: listId.uuidString)
         )
         
         self.channel = channel
         
         Task {
-            try? await channel.subscribeWithError()
+            do {
+                try await channel.subscribeWithError()
+                #if DEBUG
+                print("DEBUG: Subscribed to realtime changes for list: \(listId)")
+                #endif
+            } catch {
+                #if DEBUG
+                print("DEBUG: Subscription error: \(error)")
+                #endif
+            }
         }
         
         Task {
-            for await _ in changes {
-                // 変更があったら再読み込み
+            for await change in changes {
+                #if DEBUG
+                print("DEBUG: Realtime change received: \(change)")
+                #endif
+                
+                // 他のユーザーによる「追加」や「更新」を検知して通知を出す
+                let record: [String: AnyJSON]?
+                if let insertAction = change as? InsertAction {
+                    record = insertAction.record
+                } else if let updateAction = change as? UpdateAction {
+                    record = updateAction.record
+                } else {
+                    record = nil
+                }
+                
+                if let record = record {
+                    // 以前はここで自分以外の変更に対して通知を出していましたが、
+                    // リスト表示中は「自動更新」のみを行い、通知は出さないように変更しました。
+                    let creatorId = record["creator_id"]?.stringValue
+                    let currentUserId = SupabaseService.shared.currentUser?.id.uuidString
+                }
+                
+                // データの再読み込み
                 await loadItems(listId: listId)
             }
         }

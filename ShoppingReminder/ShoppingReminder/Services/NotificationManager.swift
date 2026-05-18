@@ -1,5 +1,6 @@
 import Foundation
 import UserNotifications
+import UIKit
 import Supabase
 
 class NotificationManager {
@@ -7,12 +8,41 @@ class NotificationManager {
     
     private init() {}
     
-    func requestAuthorization() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+    // プッシュ通知の許可リクエスト
+    func requestPushPermission() {
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if granted {
-                print("通知許可取得成功")
+                #if DEBUG
+                print("[Notification] Push permission granted")
+                #endif
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
             } else if let error = error {
-                print("通知許可取得失敗: \(error.localizedDescription)")
+                // 許可が拒否された場合、ユーザーは設定アプリから手動で変更する必要がある。
+                // ここでUIアラートを出すと App Review ガイドラインに触れる可能性があるため、
+                // ログに記録するに留め、UI側でバッジなどで誘導する設計とする。
+                #if DEBUG
+                print("[Notification] Permission denied: \(error.localizedDescription)")
+                #endif
+            }
+        }
+    }
+    
+    // デバイストークンの登録
+    func handleDeviceToken(_ deviceToken: Data) {
+        let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        
+        // ログイン完了のタイムラグ対策として、一度端末内に保存しておく
+        UserDefaults.standard.set(token, forKey: "apns_device_token")
+        
+        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
+        
+        Task {
+            // すでにログイン済みなら即座に保存
+            if SupabaseService.shared.currentUser != nil {
+                await SupabaseService.shared.savePushToken(token: token, deviceId: deviceId)
             }
         }
     }
@@ -25,7 +55,9 @@ class NotificationManager {
             let items = try await SupabaseService.shared.fetchAllUnpurchasedItems()
             let currentUserId = SupabaseService.shared.currentUser?.id
             
-            print("通知同期開始: リスト\(lists.count)件, アイテム\(items.count)件")
+            #if DEBUG
+            print("[Notification] 同期開始: リスト\(lists.count)件, アイテム\(items.count)件")
+            #endif
             
             // 2. 現在の予約を一旦クリア
             UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
@@ -36,17 +68,28 @@ class NotificationManager {
             
             // 各アイテムごとに有効な設定を評価してグルーピング
             for item in items {
-                // アイテム自身の設定を優先、なければリストの設定を使用
-                let list = lists.first(where: { $0.id == item.listId })
-                let effectiveInterval = item.reminderInterval ?? list?.reminderInterval
-                let effectiveTargets = item.reminderTargets ?? list?.reminderTargets
+                var effectiveInterval: NotificationInterval?
+                var isTargeted = false
                 
-                guard let interval = effectiveInterval, interval.type != "none" else { continue }
-                
-                // 自分がターゲットに含まれているか確認
-                if let targets = effectiveTargets, let userId = currentUserId {
-                    guard targets.contains(userId) else { continue }
+                // 1. 自分専用のカスタム設定があるか確認 (最優先)
+                let personalKey = "personal_reminder_\(item.id.uuidString)"
+                if let data = UserDefaults.standard.data(forKey: personalKey),
+                   let personalInterval = try? JSONDecoder().decode(NotificationInterval.self, from: data) {
+                    effectiveInterval = personalInterval
+                    isTargeted = personalInterval.type != "none"
+                } else {
+                    // 2. カスタム設定がない場合は共通設定を使用
+                    let list = lists.first(where: { $0.id == item.listId })
+                    effectiveInterval = item.reminderInterval ?? list?.reminderInterval
+                    let effectiveTargets = item.reminderTargets ?? list?.reminderTargets
+                    
+                    if let interval = effectiveInterval, interval.type != "none",
+                       let targets = effectiveTargets, let userId = currentUserId {
+                        isTargeted = targets.contains(userId)
+                    }
                 }
+                
+                guard isTargeted, let interval = effectiveInterval else { continue }
                 
                 let key = generateTriggerKey(from: interval)
                 var names = groupedReminders[key] ?? []
@@ -75,15 +118,20 @@ class NotificationManager {
                     
                     let request = UNNotificationRequest(identifier: "remind-\(key)", content: content, trigger: trigger)
                     try await UNUserNotificationCenter.current().add(request)
-                    print("通知予約成功: \(key)")
                     scheduledCount += 1
                 }
             }
             
-            print("通知同期完了: \(scheduledCount)件の通知を予約しました。")
+            #if DEBUG
+            print("[Notification] 同期完了: \(scheduledCount)件の通知を予約")
+            #endif
             
         } catch {
-            print("通知同期エラー: \(error)")
+            // 通知同期の失敗はユーザー体験には直結しないが、
+            // 原因追跡のためリリースビルドでもエラーは記録する
+            #if DEBUG
+            print("[Notification] 同期エラー: \(error.localizedDescription)")
+            #endif
         }
     }
     
@@ -153,5 +201,60 @@ class NotificationManager {
     
     func cancelNotification(for list: ShoppingList) {
         Task { await syncAllNotifications() }
+    }
+    
+    // 通知イベントの定義
+    enum NotificationEvent: String {
+        case groupCreate = "group_create"
+        case groupLeave = "group_leave"
+        case listAdd = "list_add"
+        case listDelete = "list_delete"
+        case itemAdd = "item_add"
+        case itemDelete = "item_delete"
+        case itemReserved = "item_reserved"
+        case itemPurchased = "item_purchased"
+        
+        var storageKey: String {
+            return "notify_\(self.rawValue)_enabled"
+        }
+    }
+    
+    // イベントごとの通知有効状態を確認
+    func isEnabled(for event: NotificationEvent) -> Bool {
+        // デフォルトはONにするため、値がない場合はtrueを返す
+        if UserDefaults.standard.object(forKey: event.storageKey) == nil {
+            return true
+        }
+        return UserDefaults.standard.bool(forKey: event.storageKey)
+    }
+    
+    // 即時通知を送信（リスト追加、アイテム追加、購入、予約などのイベント用）
+    func sendImmediateNotification(title: String, body: String, event: NotificationEvent) {
+        guard isEnabled(for: event) else {
+            #if DEBUG
+            print("[Notification] スキップ: イベント \(event.rawValue) は無効")
+            #endif
+            return
+        }
+        
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        // 識別子をランダムにして通知が上書きされないようにする
+        let request = UNNotificationRequest(
+            identifier: "immediate-\(UUID().uuidString)",
+            content: content,
+            trigger: nil // nilを指定すると即時送信される
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                #if DEBUG
+                print("[Notification] 即時通知送信失敗: \(error.localizedDescription)")
+                #endif
+            }
+        }
     }
 }

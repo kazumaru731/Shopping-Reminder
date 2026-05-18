@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct AddItemView: View {
     @Environment(\.dismiss) var dismiss
@@ -8,6 +9,12 @@ struct AddItemView: View {
     @State private var name = ""
     @State private var dueDate = Date()
     @State private var hasDeadline = false
+    @State private var linkUrl = ""
+    @State private var imageUrl = ""
+    
+    // 写真選択
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var isUploading = false
     
     // リマインド項目
     @State private var notificationType = "none"
@@ -44,6 +51,57 @@ struct AddItemView: View {
                             .onChange(of: dueDate) { _ in
                                 adjustReminderIfNeeded()
                             }
+                    }
+                }
+                
+                Section(header: Text("追加情報（任意）")) {
+                    // 商品リンク入力
+                    TextField("商品リンク (URL)", text: $linkUrl)
+                        #if os(iOS)
+                        .keyboardType(.URL)
+                        .textInputAutocapitalization(.none)
+                        #endif
+                    
+                    Divider().padding(.vertical, 4)
+                    
+                    // 写真選択
+                    HStack {
+                        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                            Label(imageUrl.isEmpty ? "写真を選択" : "写真を変更", systemImage: "photo.badge.plus")
+                        }
+                        .onChange(of: selectedPhotoItem) { newItem in
+                            Task { await uploadSelectedPhoto(newItem) }
+                        }
+                        
+                        if isUploading {
+                            ProgressView().padding(.leading, 8)
+                        } else if !imageUrl.isEmpty {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                        }
+                        
+                        Spacer()
+                        
+                        if !imageUrl.isEmpty {
+                            Button(role: .destructive) {
+                                imageUrl = ""
+                                selectedPhotoItem = nil
+                            } label: {
+                                Text("削除").font(.caption)
+                            }
+                        }
+                    }
+                    
+                    if !imageUrl.isEmpty {
+                        AsyncImage(url: URL(string: imageUrl)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(height: 100)
+                                .cornerRadius(8)
+                        } placeholder: {
+                            ProgressView()
+                        }
                     }
                 }
                 
@@ -107,7 +165,7 @@ struct AddItemView: View {
                     Button("追加") {
                         saveItem()
                     }
-                    .disabled(name.isEmpty)
+                    .disabled(name.isEmpty || isUploading)
                 }
             }
             .task {
@@ -174,7 +232,9 @@ struct AddItemView: View {
         do {
             self.members = try await SupabaseService.shared.fetchGroupMembers(groupId: list.groupId)
         } catch {
+            #if DEBUG
             print("Failed to load members: \(error)")
+            #endif
         }
     }
     
@@ -200,9 +260,30 @@ struct AddItemView: View {
                 name: name, 
                 dueDate: hasDeadline ? dueDate : nil,
                 interval: interval,
-                targets: Array(selectedMemberIds)
+                targets: Array(selectedMemberIds),
+                linkUrl: linkUrl.isEmpty ? nil : linkUrl,
+                imageUrl: imageUrl.isEmpty ? nil : imageUrl
             )
             dismiss()
+        }
+    }
+    
+    private func uploadSelectedPhoto(_ item: PhotosPickerItem?) async {
+        guard let item = item else { return }
+        isUploading = true
+        defer { isUploading = false }
+        
+        do {
+            if let data = try await item.loadTransferable(type: Data.self) {
+                let url = try await SupabaseService.shared.uploadItemImage(data: data, fileName: "item.jpg")
+                await MainActor.run {
+                    self.imageUrl = url
+                }
+            }
+        } catch {
+            #if DEBUG
+            print("Failed to upload image: \(error)")
+            #endif
         }
     }
 }

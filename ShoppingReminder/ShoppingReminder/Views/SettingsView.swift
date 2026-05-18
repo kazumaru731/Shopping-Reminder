@@ -4,20 +4,84 @@ import Auth
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
     @State private var displayName = ""
+    @State private var notifyOnListDelete = true
+    @State private var notifyOnItemDelete = true
+    @State private var notifyOnGroupLeave = true
     @State private var showingDeleteAlert = false
     @State private var alertMessage = ""
     @State private var showingAlert = false
+    
+    @AppStorage("deadline_warning_hours") private var warningHours = 24
+    @AppStorage("deadline_critical_hours") private var criticalHours = 5
+    
+    private var warningHoursStorage: Binding<Int> {
+        Binding(
+            get: { warningHours },
+            set: { 
+                warningHours = $0
+                if criticalHours >= $0 {
+                    criticalHours = max(1, $0 - 1)
+                }
+            }
+        )
+    }
+    
+    private var criticalHoursStorage: Binding<Int> {
+        Binding(
+            get: { criticalHours },
+            set: { criticalHours = min($0, warningHours - 1) }
+        )
+    }
+    
+    private func formatHours(_ hours: Int) -> String {
+        if hours % 24 == 0 {
+            return "\(hours / 24)日前"
+        } else if hours < 24 {
+            return "\(hours)時間前"
+        } else {
+            return "\(hours / 24)日と\(hours % 24)時間前"
+        }
+    }
     
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("プロフィール")) {
                     TextField("表示名", text: $displayName)
-                    Button("名前を保存") {
+                }
+                
+                Section(header: Text("通知")) {
+                    NavigationLink(destination: NotificationSettingsView()) {
+                        Label("通知設定", systemImage: "bell.badge")
+                    }
+                }
+                
+                Section(header: Text("期限表示の色分け")) {
+                    Stepper(value: warningHoursStorage, in: 1...168) {
+                        VStack(alignment: .leading) {
+                            Text("注意 (黄色): \(formatHours(warningHoursStorage.wrappedValue))")
+                            Text("期限が近づくと黄色で表示します").font(.caption2).foregroundColor(.secondary)
+                        }
+                    }
+                    Stepper(value: criticalHoursStorage, in: 1...warningHoursStorage.wrappedValue - 1) {
+                        VStack(alignment: .leading) {
+                            Text("緊急 (赤色): \(formatHours(criticalHoursStorage.wrappedValue))")
+                            Text("さらに近づくと赤色で表示します").font(.caption2).foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                Section {
+                    Button("設定を保存") {
                         Task {
                             do {
-                                try await SupabaseService.shared.updateProfile(displayName: displayName)
-                                alertMessage = "名前を更新しました"
+                                try await SupabaseService.shared.updateProfile(
+                                    displayName: displayName,
+                                    notifyOnListDelete: notifyOnListDelete,
+                                    notifyOnItemDelete: notifyOnItemDelete,
+                                    notifyOnGroupLeave: notifyOnGroupLeave
+                                )
+                                alertMessage = "設定を更新しました"
                                 showingAlert = true
                             } catch {
                                 alertMessage = "エラー: \(error.localizedDescription)"
@@ -42,9 +106,28 @@ struct SettingsView: View {
                     .foregroundColor(.red)
                 }
                 
-                Section(header: Text("アプリについて"), footer: Text("Shopping Reminder v1.0.0")) {
-                    Text("バージョン 1.0.0")
-                        .foregroundColor(.secondary)
+                Section(header: Text("サポートと法規")) {
+                    Link(destination: URL(string: "https://kazumaru731.github.io/Shopping-Reminder/terms")!) {
+                        Label("利用規約", systemImage: "doc.text")
+                    }
+                    Link(destination: URL(string: "https://kazumaru731.github.io/Shopping-Reminder/privacy")!) {
+                        Label("プライバシーポリシー", systemImage: "shield")
+                    }
+                    Link(destination: URL(string: "https://kazumaru731.github.io/Shopping-Reminder/support")!) {
+                        Label("お問い合わせ・フィードバック", systemImage: "envelope")
+                    }
+                    NavigationLink(destination: Text("ここにライセンス一覧を表示するか、外部リンクへ飛ばします")) {
+                        Label("ライセンス", systemImage: "info.circle")
+                    }
+                }
+                
+                Section(header: Text("アプリについて"), footer: Text("Shopping Reminder v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")")) {
+                    HStack {
+                        Text("バージョン")
+                        Spacer()
+                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
             .navigationTitle("設定")
@@ -77,12 +160,24 @@ struct SettingsView: View {
                 Text(alertMessage)
             }
             .task {
-                // 現在の名前を初期値にセット
-                if let user = SupabaseService.shared.currentUser {
-                    if let json = user.userMetadata["display_name"],
-                       case let .string(name) = json {
-                        displayName = name
+                // プロフィール情報を取得
+                do {
+                    if let profile = try await SupabaseService.shared.fetchCurrentProfile() {
+                        displayName = profile.displayName ?? ""
+                        notifyOnListDelete = profile.notifyOnListDelete ?? true
+                        notifyOnItemDelete = profile.notifyOnItemDelete ?? true
+                        notifyOnGroupLeave = profile.notifyOnGroupLeave ?? true
+                    } else if let user = SupabaseService.shared.currentUser {
+                        // プロフィールがない場合はメタデータから取得
+                        if let json = user.userMetadata["display_name"],
+                           case let .string(name) = json {
+                            displayName = name
+                        }
                     }
+                } catch {
+                    #if DEBUG
+                    print("Error fetching profile: \(error)")
+                    #endif
                 }
             }
         }
