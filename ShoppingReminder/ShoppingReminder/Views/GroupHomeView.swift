@@ -134,6 +134,13 @@ struct ListCardView: View {
                 Text(list.name)
                     .font(.headline)
                 
+                if let notes = list.notes, !notes.isEmpty {
+                    Text(notes)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+                
                 Text("作成: \(list.createdAt.japaneseFormatted())")
                     .font(.caption2)
                     .foregroundColor(.secondary)
@@ -214,14 +221,15 @@ class GroupHomeViewModel: ObservableObject {
         }
     }
     
-    func createList(groupId: UUID, name: String, interval: NotificationInterval, targets: [UUID]) async {
+    func createList(groupId: UUID, name: String, interval: NotificationInterval, targets: [UUID], notes: String? = nil) async {
         guard !name.isEmpty else { return }
         do {
             if let newList = try await SupabaseService.shared.createList(
                 groupId: groupId, 
                 name: name, 
                 interval: interval, 
-                targets: targets
+                targets: targets,
+                notes: notes
             ) {
                 // ローカル通知の予約
                 NotificationManager.shared.scheduleNotification(for: newList)

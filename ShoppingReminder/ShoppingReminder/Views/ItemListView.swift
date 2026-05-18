@@ -15,6 +15,19 @@ struct ItemListView: View {
     
     var body: some View {
         List {
+            if let listNotes = list.notes, !listNotes.isEmpty {
+                Section {
+                    HStack {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundColor(.blue)
+                        Text(listNotes)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            
             if viewModel.isLoading {
                 Section {
                     HStack {
@@ -134,6 +147,12 @@ struct ItemRow: View {
                 Text(item.name)
                     .font(.body)
                 
+                if let notes = item.notes, !notes.isEmpty {
+                    Text(notes)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
+                
                 HStack(spacing: 4) {
                     if let creatorName = item.creator?.displayName {
                         Text("追加: \(creatorName)")
@@ -233,9 +252,9 @@ class ItemListViewModel: ObservableObject {
     }
     
     // ... addItem, deleteItem, togglePurchased, togglePlanning は変更なし ...
-    func addItem(listId: UUID, name: String, dueDate: Date?, interval: NotificationInterval?, targets: [UUID]?, linkUrl: String? = nil, imageUrl: String? = nil) async {
+    func addItem(listId: UUID, name: String, dueDate: Date?, interval: NotificationInterval?, targets: [UUID]?, linkUrl: String? = nil, imageUrl: String? = nil, notes: String? = nil) async {
         do {
-            try await SupabaseService.shared.addItem(listId: listId, name: name, dueDate: dueDate, interval: interval, targets: targets, linkUrl: linkUrl, imageUrl: imageUrl)
+            try await SupabaseService.shared.addItem(listId: listId, name: name, dueDate: dueDate, interval: interval, targets: targets, linkUrl: linkUrl, imageUrl: imageUrl, notes: notes)
             await loadItems(listId: listId)
         } catch {
             #if DEBUG

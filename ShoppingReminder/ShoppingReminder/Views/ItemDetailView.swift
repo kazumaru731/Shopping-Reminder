@@ -59,6 +59,12 @@ struct ItemDetailView: View {
                 TextField("商品名", text: $item.name)
                     .disabled(!canEdit)
                 
+                TextField("備考・メモ", text: Binding(
+                    get: { item.notes ?? "" },
+                    set: { item.notes = $0.isEmpty ? nil : $0 }
+                ))
+                .disabled(!canEdit)
+                
                 Toggle("期限あり", isOn: $hasDeadline)
                     .disabled(!canEdit)
                 

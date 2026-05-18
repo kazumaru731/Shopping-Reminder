@@ -47,9 +47,11 @@ struct ListReminderSettingsView: View {
         }
         
         _listName = State(initialValue: list.wrappedValue.name)
+        _listNotes = State(initialValue: list.wrappedValue.notes ?? "") // 備考初期値
     }
     
     @State private var listName: String
+    @State private var listNotes: String
     
     private var isOwner: Bool {
         list.ownerId == SupabaseService.shared.currentUser?.id
@@ -64,6 +66,8 @@ struct ListReminderSettingsView: View {
             Form {
                 Section(header: Text("基本設定")) {
                     TextField("リスト名", text: $listName)
+                        .disabled(!canEdit)
+                    TextField("備考・メモ", text: $listNotes)
                         .disabled(!canEdit)
                 }
                 
@@ -191,6 +195,7 @@ struct ListReminderSettingsView: View {
         // ローカルの状態を更新する
         var updatedList = list
         updatedList.name = listName
+        updatedList.notes = listNotes.isEmpty ? nil : listNotes
         updatedList.reminderInterval = interval
         updatedList.reminderTargets = Array(selectedMemberIds)
         self.list = updatedList

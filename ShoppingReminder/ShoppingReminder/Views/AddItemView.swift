@@ -11,6 +11,7 @@ struct AddItemView: View {
     @State private var hasDeadline = false
     @State private var linkUrl = ""
     @State private var imageUrl = ""
+    @State private var notes = "" // 備考欄
     
     // 写真選択
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -40,6 +41,7 @@ struct AddItemView: View {
             Form {
                 Section(header: Text("基本情報")) {
                     TextField("たまご、牛乳など", text: $name)
+                    TextField("備考・メモ（例: 安ければメーカー問わず）", text: $notes)
                 }
                 
                 Section(header: Text("期日設定")) {
@@ -262,7 +264,8 @@ struct AddItemView: View {
                 interval: interval,
                 targets: Array(selectedMemberIds),
                 linkUrl: linkUrl.isEmpty ? nil : linkUrl,
-                imageUrl: imageUrl.isEmpty ? nil : imageUrl
+                imageUrl: imageUrl.isEmpty ? nil : imageUrl,
+                notes: notes.isEmpty ? nil : notes
             )
             dismiss()
         }

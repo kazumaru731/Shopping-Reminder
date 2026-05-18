@@ -345,7 +345,7 @@ class SupabaseService: ObservableObject {
     }
     
     // リスト作成
-    func createList(groupId: UUID, name: String, interval: NotificationInterval, targets: [UUID]) async throws -> ShoppingList? {
+    func createList(groupId: UUID, name: String, interval: NotificationInterval, targets: [UUID], notes: String? = nil) async throws -> ShoppingList? {
         guard let userId = currentUser?.id else { return nil }
         
         struct CreateListPayload: Encodable {
@@ -355,6 +355,7 @@ class SupabaseService: ObservableObject {
             let reminder_interval: NotificationInterval
             let reminder_targets: [UUID]
             let allow_member_edit: Bool
+            let notes: String?
         }
         
         let payload = CreateListPayload(
@@ -363,7 +364,8 @@ class SupabaseService: ObservableObject {
             owner_id: userId,
             reminder_interval: interval,
             reminder_targets: targets,
-            allow_member_edit: false
+            allow_member_edit: false,
+            notes: notes
         )
         
         let newList: ShoppingList = try await client
@@ -391,8 +393,9 @@ class SupabaseService: ObservableObject {
         struct UpdatePayload: Encodable {
             let name: String
             let allow_member_edit: Bool
+            let notes: String?
         }
-        let payload = UpdatePayload(name: list.name, allow_member_edit: list.allowMemberEdit ?? false)
+        let payload = UpdatePayload(name: list.name, allow_member_edit: list.allowMemberEdit ?? false, notes: list.notes)
         try await client.from("lists").update(payload).eq("id", value: list.id).execute()
     }
     
@@ -507,7 +510,7 @@ class SupabaseService: ObservableObject {
     }
     
     // アイテム追加
-    func addItem(listId: UUID, name: String, dueDate: Date?, interval: NotificationInterval?, targets: [UUID]?, linkUrl: String? = nil, imageUrl: String? = nil) async throws {
+    func addItem(listId: UUID, name: String, dueDate: Date?, interval: NotificationInterval?, targets: [UUID]?, linkUrl: String? = nil, imageUrl: String? = nil, notes: String? = nil) async throws {
         struct InsertPayload: Encodable {
             let list_id: UUID
             let name: String
@@ -519,6 +522,7 @@ class SupabaseService: ObservableObject {
             let link_url: String?
             let image_url: String?
             let allow_collaborator_edit: Bool
+            let notes: String?
         }
         
         let payload = InsertPayload(
@@ -531,7 +535,8 @@ class SupabaseService: ObservableObject {
             reminder_targets: targets,
             link_url: linkUrl,
             image_url: imageUrl,
-            allow_collaborator_edit: false
+            allow_collaborator_edit: false,
+            notes: notes
         )
         
         try await client
@@ -550,6 +555,7 @@ class SupabaseService: ObservableObject {
             let link_url: String?
             let image_url: String?
             let allow_collaborator_edit: Bool
+            let notes: String?
         }
         
         let payload = UpdatePayload(
@@ -559,7 +565,8 @@ class SupabaseService: ObservableObject {
             reminder_targets: item.reminderTargets,
             link_url: item.linkUrl,
             image_url: item.imageUrl,
-            allow_collaborator_edit: item.allowCollaboratorEdit ?? false
+            allow_collaborator_edit: item.allowCollaboratorEdit ?? false,
+            notes: item.notes
         )
         
         try await client

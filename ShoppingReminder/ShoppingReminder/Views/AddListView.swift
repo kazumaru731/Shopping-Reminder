@@ -7,6 +7,7 @@ struct AddListView: View {
     @Environment(\.dismiss) var dismiss
     
     @State private var name = ""
+    @State private var notes = "" // 備考欄
     @State private var notificationType = "none"
     @State private var reminderTime = Date()
     @State private var selectedWeekday = 2
@@ -30,6 +31,7 @@ struct AddListView: View {
             Form {
                 Section(header: Text("基本情報")) {
                     TextField("リスト名（例: スーパー、ドラッグストア）", text: $name)
+                    TextField("備考（例: 金曜日のBBQ用、日用品など）", text: $notes)
                 }
                 
                 Section(header: Text("リマインド頻度")) {
@@ -147,7 +149,8 @@ struct AddListView: View {
                 groupId: groupId, 
                 name: name, 
                 interval: interval, 
-                targets: Array(selectedMemberIds)
+                targets: Array(selectedMemberIds),
+                notes: notes.isEmpty ? nil : notes
             )
             dismiss()
         }

@@ -44,6 +44,7 @@ struct ShoppingList: Codable, Identifiable {
     var reminderInterval: NotificationInterval?
     var reminderTargets: [UUID]?
     var allowMemberEdit: Bool?
+    var notes: String? // 備考欄
     
     enum CodingKeys: String, CodingKey {
         case id, name
@@ -53,6 +54,7 @@ struct ShoppingList: Codable, Identifiable {
         case reminderInterval = "reminder_interval"
         case reminderTargets = "reminder_targets"
         case allowMemberEdit = "allow_member_edit"
+        case notes
     }
 }
 
@@ -72,6 +74,7 @@ struct Item: Codable, Identifiable {
     var linkUrl: String?
     var imageUrl: String?
     var allowCollaboratorEdit: Bool?
+    var notes: String? // 備考欄
     
     enum CodingKeys: String, CodingKey {
         case id, name
@@ -86,6 +89,7 @@ struct Item: Codable, Identifiable {
         case linkUrl = "link_url"
         case imageUrl = "image_url"
         case allowCollaboratorEdit = "allow_collaborator_edit"
+        case notes
         case purchaser
         case creator
     }
