@@ -59,8 +59,16 @@ class NotificationManager {
             print("[Notification] 同期開始: リスト\(lists.count)件, アイテム\(items.count)件")
             #endif
             
-            // 2. 現在の予約を一旦クリア
-            UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+            // 2. 現在の予約（remind-で始まるもの）を一旦クリア
+            let center = UNUserNotificationCenter.current()
+            let pendingRequests = await center.pendingNotificationRequests()
+            let remindIds = pendingRequests.map { $0.identifier }.filter { $0.hasPrefix("remind-") }
+            
+            if !remindIds.isEmpty {
+                center.removePendingNotificationRequests(withIdentifiers: remindIds)
+                // 削除処理が非同期でシステムに反映されるのを確実に待つための極小ウェイト（iOSのレースコンディション対策）
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
+            }
             
             // 3. タイミングごとにアイテムをグルーピング
             // Key: タイミング（type-time-date/weekday）, Value: アイテム名のセット

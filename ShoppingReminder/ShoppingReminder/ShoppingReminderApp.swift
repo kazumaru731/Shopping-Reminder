@@ -87,4 +87,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .list, .sound])
     }
+    
+    // バックグラウンドでプッシュ通知（他ユーザーの購入・変更）を受け取った際にローカル通知を再同期
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        Task {
+            await NotificationManager.shared.syncAllNotifications()
+            completionHandler(.newData)
+        }
+    }
 }
