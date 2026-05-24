@@ -11,6 +11,7 @@ struct ListReminderSettingsView: View {
     @State private var reminderTime = Date()
     @State private var selectedWeekday = 2
     @State private var selectedMemberIds: Set<UUID> = []
+    @State private var showingDeleteAlert = false // 削除確認アラート表示用
     
     let notificationTypes = [
         ("なし", "none"),
@@ -142,10 +143,12 @@ struct ListReminderSettingsView: View {
                             set: { list.allowMemberEdit = $0 }
                         ))
                     }
-                    
+                }
+                
+                if canEdit {
                     Section {
                         Button(role: .destructive) {
-                            deleteList()
+                            showingDeleteAlert = true
                         } label: {
                             HStack {
                                 Spacer()
@@ -168,6 +171,14 @@ struct ListReminderSettingsView: View {
                         saveSettings()
                     }
                 }
+            }
+            .alert("リストの削除", isPresented: $showingDeleteAlert) {
+                Button("キャンセル", role: .cancel) { }
+                Button("削除", role: .destructive) {
+                    deleteList()
+                }
+            } message: {
+                Text("このリストを削除してもよろしいですか？リスト内のすべてのアイテムとリマインド設定が削除され、元に戻すことはできません。")
             }
             .task {
                 await viewModel.loadMembers(groupId: list.groupId)
