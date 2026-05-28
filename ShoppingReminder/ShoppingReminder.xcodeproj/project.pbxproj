@@ -76,6 +76,13 @@
 			);
 			target = A4C1F9ED2F8FBBA20057BC3F /* ShoppingReminder */;
 		};
+		A4A2F1172FBB34D400725FA1 /* Exceptions for "ShoppingReminder" folder in "ShoppingReminderWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/Constants.swift,
+			);
+			target = A48549E42F912DC000663540 /* ShoppingReminderWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -91,6 +98,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				A49143B72F9E585D00A617F9 /* Exceptions for "ShoppingReminder" folder in "ShoppingReminder" target */,
+				A4A2F1172FBB34D400725FA1 /* Exceptions for "ShoppingReminder" folder in "ShoppingReminderWidgetExtension" target */,
 			);
 			path = ShoppingReminder;
 			sourceTree = "<group>";
@@ -636,7 +644,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				XROS_DEPLOYMENT_TARGET = 26.4;
 			};
 			name = Debug;
@@ -685,7 +693,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				XROS_DEPLOYMENT_TARGET = 26.4;
 			};
 			name = Release;
