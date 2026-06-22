@@ -1,208 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>サポート - Shopping Reminder</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
-            background: #f5f5f7;
-            color: #1d1d1f;
-            line-height: 1.7;
-        }
-
-        header {
-            background: #fff;
-            border-bottom: 1px solid #d2d2d7;
-            padding: 20px 24px;
-            position: sticky;
-            top: 0;
-        }
-
-        header h1 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1d1d1f;
-        }
-
-        header p {
-            font-size: 13px;
-            color: #6e6e73;
-            margin-top: 2px;
-        }
-
-        main {
-            max-width: 720px;
-            margin: 40px auto;
-            padding: 0 24px 60px;
-        }
-
-        .card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 32px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-        }
-
-        h2 {
-            font-size: 17px;
-            font-weight: 700;
-            color: #1d1d1f;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #f0f0f5;
-        }
-
-        p {
-            font-size: 15px;
-            color: #3a3a3c;
-            margin-bottom: 10px;
-        }
-
-        .faq-item {
-            margin-bottom: 20px;
-        }
-
-        .faq-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .faq-q {
-            font-size: 15px;
-            font-weight: 600;
-            color: #1d1d1f;
-            margin-bottom: 6px;
-        }
-
-        .faq-a {
-            font-size: 15px;
-            color: #3a3a3c;
-        }
-
-        .contact-btn {
-            display: inline-block;
-            background: #0071e3;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 600;
-            text-decoration: none;
-            margin-top: 8px;
-        }
-
-        .contact-btn:hover {
-            background: #0077ed;
-            text-decoration: none;
-        }
-
-        .link-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .link-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #0071e3;
-            font-size: 15px;
-            text-decoration: none;
-        }
-
-        .link-item:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>買い物リマインダー サポート</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; line-height: 1.75; margin: 0; color: #1d1d1f; background: #fff; }
+    main { max-width: 760px; margin: 0 auto; padding: 40px 20px 64px; }
+    h1 { font-size: 2rem; line-height: 1.25; }
+    h2 { margin-top: 2rem; font-size: 1.25rem; }
+    ul { padding-left: 1.4rem; }
+    a { color: #06c; }
+  </style>
 </head>
-
 <body>
-    <header>
-        <h1>🛒 Shopping Reminder</h1>
-        <p>サポート</p>
-    </header>
+<main>
+  <h1>買い物リマインダー サポート</h1>
+  <p>買い物リマインダーに関するお問い合わせ、フィードバック、不具合報告は以下の方法でご連絡ください。</p>
 
-    <main>
-        <div class="card">
-            <h2>よくある質問</h2>
+  <h2>お問い合わせ</h2>
+  <p>GitHub Issues を利用できる場合は、以下のリポジトリからお問い合わせください。</p>
+  <p><a href="https://github.com/kazumaru731/Shopping-Reminder/issues">https://github.com/kazumaru731/Shopping-Reminder/issues</a></p>
 
-            <div class="faq-item">
-                <p class="faq-q">Q. グループに誰かを招待するにはどうすればよいですか？</p>
-                <p class="faq-a">A. グループの設定画面から「招待コード」を確認し、そのコードを相手に共有してください。相手のアプリ画面で「グループに参加」から招待コードを入力することで参加できます。
-                </p>
-            </div>
+  <h2>お問い合わせ時にあると助かる情報</h2>
+  <ul>
+    <li>利用中の iPhone / iOS バージョン</li>
+    <li>アプリのバージョン</li>
+    <li>発生した操作手順</li>
+    <li>表示されたエラーメッセージ</li>
+  </ul>
 
-            <div class="faq-item">
-                <p class="faq-q">Q. ウィジェットにリストが表示されません。</p>
-                <p class="faq-a">A. アプリを一度起動してデータを同期してからウィジェットを再追加してください。また、iOS設定 > Shopping Reminder
-                    で通知・バックグラウンドの権限が許可されているかご確認ください。</p>
-            </div>
-
-            <div class="faq-item">
-                <p class="faq-q">Q. プッシュ通知が届きません。</p>
-                <p class="faq-a">A. iOS設定 > 通知 > Shopping Reminder で通知が許可されているかご確認ください。また、アプリ内の「設定 >
-                    通知設定」から通知の有効・無効を確認してください。</p>
-            </div>
-
-            <div class="faq-item">
-                <p class="faq-q">Q. アカウントを削除するとデータはどうなりますか？</p>
-                <p class="faq-a">A. 設定 > アカウントを削除 を実行すると、あなたが作成したすべてのリスト・アイテム・グループ情報・プッシュトークンが完全に削除されます。この操作は取り消せません。
-                </p>
-            </div>
-
-            <div class="faq-item">
-                <p class="faq-q">Q. パスワードを忘れました。</p>
-                <p class="faq-a">A. ログイン画面の「パスワードをお忘れですか？」から、登録メールアドレス宛にリセットメールを送信できます。</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>お問い合わせ</h2>
-            <p>
-                FAQで解決しない場合や不具合のご報告、その他サポートのご依頼は以下よりご連絡ください。
-            </p>
-            <a class="contact-btn" href="mailto:nanbu0226@icloud.com?subject=Shopping%20Reminder%20お問い合わせ">
-                メールでお問い合わせ
-            </a>
-            <p style="font-size: 12px; color: #6e6e73; margin-top: 8px;">
-                ※お問い合わせの際は、よろしければご利用のiOSバージョン等の環境をご記入ください。
-            </p>
-        </div>
-
-        <div class="card">
-            <h2>アカウントの削除（退会）</h2>
-            <p>
-                Shopping Reminderのアカウント削除（退会）は、アプリ内の「設定（左上のアイコン） ＞ アカウントを削除」から即時に実行していただけます。
-            </p>
-            <p>
-                アプリを既にアンインストールされた場合など、Webサイトからのアカウント削除申請を希望される場合は、以下のボタンより「アカウント削除希望」と「ご登録メールアドレス」を明記の上、メールにてご申請ください。本人確認完了後、迅速にデータを完全に削除いたします。
-            </p>
-            <a class="contact-btn" style="background: #ff3b30;"
-                href="mailto:nanbu0226@icloud.com?subject=Shopping%20Reminder%20アカウント削除申請&body=【アカウント削除申請】%0D%0AShopping%20Reminderのご登録メールアドレスをご記入の上、そのまま送信してください。%0D%0A%0D%0A登録メールアドレス：%0D%0A※本人確認のため、必ずご登録時のメールアドレスから送信してください。">
-                アカウント削除を申請する
-            </a>
-        </div>
-
-        <div class="card">
-            <h2>関連リンク</h2>
-            <div class="link-list">
-                <a class="link-item" href="./privacy.html">🔒 プライバシーポリシー</a>
-                <a class="link-item" href="./terms.html">📄 利用規約</a>
-                <a class="link-item" href="https://github.com/kazumaru731/Shopping-Reminder" target="_blank">🐙
-                    GitHubリポジトリ</a>
-            </div>
-        </div>
-    </main>
+  <h2>関連ページ</h2>
+  <ul>
+    <li><a href="../privacy/">プライバシーポリシー</a></li>
+    <li><a href="../terms/">利用規約</a></li>
+  </ul>
+</main>
 </body>
-
 </html>

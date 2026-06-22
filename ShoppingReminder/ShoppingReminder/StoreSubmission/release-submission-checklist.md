@@ -11,7 +11,7 @@ Last updated: 2026-06-22
 - [x] Privacy manifests added for the app and widget UserDefaults usage.
 - [x] Build number incremented from `2` to `3`.
 - [x] Static GitHub Pages files prepared under `StoreSubmission/github-pages/`.
-- [x] Static GitHub Pages files copied to repository-level `docs/`.
+- [x] Static GitHub Pages files copied to repository-root `docs/`.
 - [x] App Store metadata text files prepared under `StoreSubmission/fastlane/metadata/ja-JP/`.
 - [x] Supabase FK performance indexes added and applied to production.
 - [x] Supabase Edge Functions deployed with `SUPABASE_SECRET_KEYS` support and `SUPABASE_SERVICE_ROLE_KEY` fallback.
