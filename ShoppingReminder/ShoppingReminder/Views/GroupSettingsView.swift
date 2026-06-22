@@ -79,7 +79,7 @@ struct GroupSettingsView: View {
                 try await SupabaseService.shared.updateGroup(group: updatedGroup)
                 dismiss()
             } catch {
-                print("Failed to update group: \(error)")
+                SecureLog.debug("Failed to update group")
             }
         }
     }

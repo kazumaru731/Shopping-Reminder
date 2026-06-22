@@ -124,7 +124,7 @@ struct AddListView: View {
                 selectedMemberIds = Set(members.map { $0.id })
             }
         } catch {
-            print("Failed to load members: \(error)")
+            SecureLog.debug("Failed to load members")
         }
     }
     

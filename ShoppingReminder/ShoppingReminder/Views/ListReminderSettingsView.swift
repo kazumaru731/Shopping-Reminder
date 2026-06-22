@@ -233,7 +233,7 @@ class ListReminderSettingsViewModel: ObservableObject {
         do {
             self.members = try await SupabaseService.shared.fetchGroupMembers(groupId: groupId)
         } catch {
-            print("Failed to load members: \(error)")
+            SecureLog.debug("Failed to load members")
         }
     }
     
@@ -241,7 +241,7 @@ class ListReminderSettingsViewModel: ObservableObject {
         do {
             try await SupabaseService.shared.updateList(list: list)
         } catch {
-            print("Failed to update list: \(error)")
+            SecureLog.debug("Failed to update list")
         }
     }
     
@@ -250,7 +250,7 @@ class ListReminderSettingsViewModel: ObservableObject {
             try await SupabaseService.shared.updateListReminder(listId: list.id, interval: interval, targets: targets)
             await NotificationManager.shared.syncAllNotifications()
         } catch {
-            print("Failed to update reminder: \(error)")
+            SecureLog.debug("Failed to update reminder")
         }
     }
     
@@ -259,7 +259,7 @@ class ListReminderSettingsViewModel: ObservableObject {
             try await SupabaseService.shared.deleteList(id: list.id)
             await NotificationManager.shared.syncAllNotifications()
         } catch {
-            print("Failed to delete list: \(error)")
+            SecureLog.debug("Failed to delete list")
         }
     }
 }

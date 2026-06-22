@@ -241,12 +241,12 @@ class ItemListViewModel: ObservableObject {
             let fetchedItems = try await SupabaseService.shared.fetchItems(listId: listId)
             self.items = fetchedItems
             #if DEBUG
-            print("DEBUG: Items loaded: \(fetchedItems.count) items")
+            SecureLog.debug("DEBUG: Items loaded: \(fetchedItems.count) items")
             #endif
             await NotificationManager.shared.syncAllNotifications()
         } catch {
             #if DEBUG
-            print("DEBUG: Error loading items: \(error)")
+            SecureLog.debug("DEBUG: Error loading items")
             #endif
         }
     }
@@ -258,7 +258,7 @@ class ItemListViewModel: ObservableObject {
             await loadItems(listId: listId)
         } catch {
             #if DEBUG
-            print("Error adding item: \(error)")
+            SecureLog.debug("Error adding item")
             #endif
         }
     }
@@ -269,7 +269,7 @@ class ItemListViewModel: ObservableObject {
             await loadItems(listId: item.listId)
         } catch {
             #if DEBUG
-            print("Error deleting item: \(error)")
+            SecureLog.debug("Error deleting item")
             #endif
         }
     }
@@ -280,7 +280,7 @@ class ItemListViewModel: ObservableObject {
             await loadItems(listId: item.listId)
         } catch {
             #if DEBUG
-            print("Error toggling status: \(error)")
+            SecureLog.debug("Error toggling status")
             #endif
         }
     }
@@ -291,7 +291,7 @@ class ItemListViewModel: ObservableObject {
             await loadItems(listId: item.listId)
         } catch {
             #if DEBUG
-            print("Error toggling planning: \(error)")
+            SecureLog.debug("Error toggling planning")
             #endif
         }
     }
@@ -314,39 +314,20 @@ class ItemListViewModel: ObservableObject {
             do {
                 try await channel.subscribeWithError()
                 #if DEBUG
-                print("DEBUG: Subscribed to realtime changes for list: \(listId)")
+                SecureLog.debug("DEBUG: Subscribed to realtime changes")
                 #endif
             } catch {
                 #if DEBUG
-                print("DEBUG: Subscription error: \(error)")
+                SecureLog.debug("DEBUG: Subscription error")
                 #endif
             }
         }
         
         Task {
-            for await change in changes {
+            for await _ in changes {
                 #if DEBUG
-                print("DEBUG: Realtime change received: \(change)")
+                SecureLog.debug("DEBUG: Realtime change received")
                 #endif
-                
-                // 他のユーザーによる「追加」や「更新」を検知して通知を出す
-                let record: [String: AnyJSON]?
-                if let insertAction = change as? InsertAction {
-                    record = insertAction.record
-                } else if let updateAction = change as? UpdateAction {
-                    record = updateAction.record
-                } else {
-                    record = nil
-                }
-                
-                if let record = record {
-                    // 以前はここで自分以外の変更に対して通知を出していましたが、
-                    // リスト表示中は「自動更新」のみを行い、通知は出さないように変更しました。
-                    let creatorId = record["creator_id"]?.stringValue
-                    let currentUserId = SupabaseService.shared.currentUser?.id.uuidString
-                }
-                
-                // データの再読み込み
                 await loadItems(listId: listId)
             }
         }

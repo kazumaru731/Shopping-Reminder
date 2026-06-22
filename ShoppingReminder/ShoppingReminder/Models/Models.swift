@@ -4,6 +4,7 @@ struct Profile: Codable, Identifiable, Hashable {
     let id: UUID
     var displayName: String?
     var avatarUrl: String?
+    var accountType: String?
     var notifyOnListDelete: Bool?
     var notifyOnItemDelete: Bool?
     var notifyOnGroupLeave: Bool?
@@ -12,6 +13,7 @@ struct Profile: Codable, Identifiable, Hashable {
         case id
         case displayName = "display_name"
         case avatarUrl = "avatar_url"
+        case accountType = "account_type"
         case notifyOnListDelete = "notify_on_list_delete"
         case notifyOnItemDelete = "notify_on_item_delete"
         case notifyOnGroupLeave = "notify_on_group_leave"

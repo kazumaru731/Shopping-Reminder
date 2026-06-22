@@ -353,7 +353,7 @@ struct ItemDetailView: View {
         do {
             self.members = try await SupabaseService.shared.fetchGroupMembers(groupId: groupId)
         } catch {
-            print("Failed to load members: \(error)")
+            SecureLog.debug("Failed to load members")
         }
     }
     
@@ -398,7 +398,7 @@ struct ItemDetailView: View {
                 await NotificationManager.shared.syncAllNotifications()
                 dismiss()
             } catch {
-                print("Failed to save item: \(error)")
+                SecureLog.debug("Failed to save item")
             }
         }
     }
@@ -433,7 +433,7 @@ struct ItemDetailView: View {
                 }
             }
         } catch {
-            print("Failed to upload image: \(error)")
+            SecureLog.debug("Failed to upload image")
         }
     }
 }
