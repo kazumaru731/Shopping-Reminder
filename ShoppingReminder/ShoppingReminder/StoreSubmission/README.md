@@ -12,7 +12,7 @@ This folder contains copy-ready material for the next App Store update after rem
 - `privacy-policy-ja.md`: Draft privacy policy text to publish at the existing in-app URL.
 - `github-pages/`: Static HTML pages ready to publish to GitHub Pages.
 - `fastlane/metadata/ja-JP/`: Copy-ready App Store metadata files compatible with a fastlane-style metadata layout.
-- `../docs/`: GitHub Pages-ready copy placed at the repository root.
+- `../../../docs/`: GitHub Pages-ready copy placed at the repository root.
 
 ## Implementation Already Applied
 
@@ -31,7 +31,7 @@ This folder contains copy-ready material for the next App Store update after rem
   - `https://kazumaru731.github.io/Shopping-Reminder/privacy`
   - `https://kazumaru731.github.io/Shopping-Reminder/terms`
   - `https://kazumaru731.github.io/Shopping-Reminder/support`
-- The same static pages have also been copied to the repository-level `docs/` folder for GitHub Pages branch publishing.
+- The same static pages have also been copied to the repository-root `docs/` folder for GitHub Pages branch publishing.
 - Update App Store Connect metadata using `app-store-metadata-ja.md`.
 - Update App Store Connect App Privacy using `app-privacy-ja.md`.
 - Add the reviewer note from `release-submission-checklist.md` when submitting the build.
