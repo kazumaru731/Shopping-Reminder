@@ -72,7 +72,7 @@ class GroupMemberListViewModel: ObservableObject {
         do {
             self.members = try await SupabaseService.shared.fetchGroupMembers(groupId: groupId)
         } catch {
-            print("Failed to load members: \(error)")
+            SecureLog.debug("Failed to load members")
         }
     }
     
@@ -81,7 +81,7 @@ class GroupMemberListViewModel: ObservableObject {
             try await SupabaseService.shared.removeMember(groupId: groupId, userId: userId)
             await loadMembers(groupId: groupId)
         } catch {
-            print("Error removing member: \(error)")
+            SecureLog.debug("Error removing member")
         }
     }
 }

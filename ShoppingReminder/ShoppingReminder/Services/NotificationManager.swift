@@ -14,17 +14,17 @@ class NotificationManager {
         center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if granted {
                 #if DEBUG
-                print("[Notification] Push permission granted")
+                SecureLog.debug("[Notification] Push permission granted")
                 #endif
                 DispatchQueue.main.async {
                     UIApplication.shared.registerForRemoteNotifications()
                 }
-            } else if let error = error {
+            } else if error != nil {
                 // 許可が拒否された場合、ユーザーは設定アプリから手動で変更する必要がある。
                 // ここでUIアラートを出すと App Review ガイドラインに触れる可能性があるため、
                 // ログに記録するに留め、UI側でバッジなどで誘導する設計とする。
                 #if DEBUG
-                print("[Notification] Permission denied: \(error.localizedDescription)")
+                SecureLog.debug("[Notification] Permission denied")
                 #endif
             }
         }
@@ -56,7 +56,7 @@ class NotificationManager {
             let currentUserId = SupabaseService.shared.currentUser?.id
             
             #if DEBUG
-            print("[Notification] 同期開始: リスト\(lists.count)件, アイテム\(items.count)件")
+            SecureLog.debug("[Notification] 同期開始: リスト\(lists.count)件, アイテム\(items.count)件")
             #endif
             
             // 2. 現在の予約（remind-で始まるもの）を一旦クリア
@@ -113,7 +113,7 @@ class NotificationManager {
                 
                 if let trigger = trigger {
                     let content = UNMutableNotificationContent()
-                    content.title = "お買い物リマインダー"
+                    content.title = "買い物リマインダー"
                     
                     let sortedNames = Array(itemNames).sorted()
                     let displayLimit = 5
@@ -131,14 +131,14 @@ class NotificationManager {
             }
             
             #if DEBUG
-            print("[Notification] 同期完了: \(scheduledCount)件の通知を予約")
+            SecureLog.debug("[Notification] 同期完了: \(scheduledCount)件の通知を予約")
             #endif
             
         } catch {
             // 通知同期の失敗はユーザー体験には直結しないが、
             // 原因追跡のためリリースビルドでもエラーは記録する
             #if DEBUG
-            print("[Notification] 同期エラー: \(error.localizedDescription)")
+            SecureLog.debug("[Notification] 同期エラー")
             #endif
         }
     }
@@ -240,7 +240,7 @@ class NotificationManager {
     func sendImmediateNotification(title: String, body: String, event: NotificationEvent) {
         guard isEnabled(for: event) else {
             #if DEBUG
-            print("[Notification] スキップ: イベント \(event.rawValue) は無効")
+            SecureLog.debug("[Notification] スキップ: イベント \(event.rawValue) は無効")
             #endif
             return
         }
@@ -258,9 +258,9 @@ class NotificationManager {
         )
         
         UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
+            if error != nil {
                 #if DEBUG
-                print("[Notification] 即時通知送信失敗: \(error.localizedDescription)")
+                SecureLog.debug("[Notification] 即時通知送信失敗")
                 #endif
             }
         }

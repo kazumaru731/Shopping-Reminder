@@ -1,5 +1,4 @@
 import SwiftUI
-import Auth
 
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
@@ -84,7 +83,7 @@ struct SettingsView: View {
                                 alertMessage = "設定を更新しました"
                                 showingAlert = true
                             } catch {
-                                alertMessage = "エラー: \(error.localizedDescription)"
+                                alertMessage = "設定の更新に失敗しました。時間をおいてもう一度お試しください。"
                                 showingAlert = true
                             }
                         }
@@ -92,14 +91,6 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("アカウント")) {
-                    Button("ログアウト") {
-                        Task {
-                            try? await SupabaseService.shared.signOut()
-                            dismiss()
-                        }
-                    }
-                    .foregroundColor(.blue)
-                    
                     Button("アカウントを削除") {
                         showingDeleteAlert = true
                     }
@@ -121,7 +112,7 @@ struct SettingsView: View {
                     }
                 }
                 
-                Section(header: Text("アプリについて"), footer: Text("Shopping Reminder v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")")) {
+                Section(header: Text("アプリについて"), footer: Text("買い物リマインダー v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")")) {
                     HStack {
                         Text("バージョン")
                         Spacer()
@@ -145,7 +136,7 @@ struct SettingsView: View {
                             try await SupabaseService.shared.deleteAccount()
                             dismiss()
                         } catch {
-                            alertMessage = "削除に失敗しました: \(error.localizedDescription)"
+                            alertMessage = "アカウント削除に失敗しました。時間をおいてもう一度お試しください。"
                             showingAlert = true
                         }
                     }
@@ -167,16 +158,10 @@ struct SettingsView: View {
                         notifyOnListDelete = profile.notifyOnListDelete ?? true
                         notifyOnItemDelete = profile.notifyOnItemDelete ?? true
                         notifyOnGroupLeave = profile.notifyOnGroupLeave ?? true
-                    } else if let user = SupabaseService.shared.currentUser {
-                        // プロフィールがない場合はメタデータから取得
-                        if let json = user.userMetadata["display_name"],
-                           case let .string(name) = json {
-                            displayName = name
-                        }
                     }
                 } catch {
                     #if DEBUG
-                    print("Error fetching profile: \(error)")
+                    SecureLog.debug("Error fetching profile")
                     #endif
                 }
             }

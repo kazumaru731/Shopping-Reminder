@@ -1,0 +1,43 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "A7572FE4-4B4D-449B-A533-D7FF6123A4B5",
+        "deviceName" : "iPhone 17 Pro Max",
+        "exportedFileName" : "F51A0D64-3ED6-4F52-AC3E-30631C3605E1.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "03-item-list_0_EE4E63A4-7945-4148-B353-4DFEC692152F.png",
+        "timestamp" : 1780928345.494
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "A7572FE4-4B4D-449B-A533-D7FF6123A4B5",
+        "deviceName" : "iPhone 17 Pro Max",
+        "exportedFileName" : "ACA31580-96F8-4A7B-86E1-2ECA05F11961.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "02-group-home_0_0DEA98AF-EDCC-495C-B28D-0585823B006C.png",
+        "timestamp" : 1780928343.376
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "A7572FE4-4B4D-449B-A533-D7FF6123A4B5",
+        "deviceName" : "iPhone 17 Pro Max",
+        "exportedFileName" : "D1746193-D759-476D-90A3-0556F2F7C320.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "01-group-list_0_497F529B-7EBF-45F1-AB10-A25F29547373.png",
+        "timestamp" : 1780928341.148
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "A7572FE4-4B4D-449B-A533-D7FF6123A4B5",
+        "deviceName" : "iPhone 17 Pro Max",
+        "exportedFileName" : "2486CE2B-69AD-4043-B02E-7306760739D0.txt",
+        "isAssociatedWithFailure" : true,
+        "suggestedHumanReadableName" : "Complete Issue Description.txt"
+      }
+    ],
+    "testIdentifier" : "ShoppingReminderUITests/testCaptureAppStoreScreenshots()",
+    "testIdentifierURL" : "test://com.apple.xcode/ShoppingReminder/ShoppingReminderUITests/ShoppingReminderUITests/testCaptureAppStoreScreenshots"
+  }
+]

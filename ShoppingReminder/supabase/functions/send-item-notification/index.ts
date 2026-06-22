@@ -4,12 +4,24 @@ import * as jose from 'https://deno.land/x/jose@v4.14.4/index.ts'
 
 serve(async (req) => {
   try {
+    const webhookSecret = Deno.env.get('NOTIFICATION_WEBHOOK_SECRET')?.trim()
+    const providedSecret = req.headers.get('x-webhook-secret')?.trim() ?? ''
+
+    if (!webhookSecret) {
+      console.error('[Notification] Missing webhook secret')
+      return new Response('Service unavailable', { status: 503 })
+    }
+
+    if (!constantTimeEquals(providedSecret, webhookSecret)) {
+      return new Response('Unauthorized', { status: 401 })
+    }
+
     const payload = await req.json()
     const { table, type, record, old_record } = payload
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      getSupabaseAdminKey()
     )
 
     let title = ""
@@ -81,7 +93,7 @@ serve(async (req) => {
     }
 
     if (!groupId || !title) {
-      console.log(`[Skip] groupId: ${groupId}, title: ${title}`)
+      console.log('[Notification] Skipped event')
       return new Response("Skipped", { status: 200 })
     }
 
@@ -90,7 +102,7 @@ serve(async (req) => {
     if (memberError) throw new Error(`Failed to fetch members: ${memberError.message}`)
     
     const userIds = members?.map(m => m.user_id).filter(id => id !== actorId) ?? []
-    console.log(`[Info] Target userIds: ${JSON.stringify(userIds)} (Actor: ${actorId})`)
+    console.log(`[Notification] Recipient count: ${userIds.length}`)
 
     if (userIds.length === 0) return new Response("No recipients", { status: 200 })
 
@@ -99,10 +111,10 @@ serve(async (req) => {
     if (tokenError) throw new Error(`Failed to fetch tokens: ${tokenError.message}`)
     
     if (!tokens || tokens.length === 0) {
-      console.log(`[Info] No tokens found for users: ${userIds.join(', ')}`)
+      console.log('[Notification] No push tokens found')
       return new Response("No tokens", { status: 200 })
     }
-    console.log(`[Info] Found ${tokens.length} tokens.`)
+    console.log(`[Notification] Push token count: ${tokens.length}`)
 
     // 3. APNs認証準備
     const keyID = Deno.env.get('APNS_KEY_ID')?.trim()
@@ -117,8 +129,6 @@ serve(async (req) => {
     if (!keyID || !teamID || !bundleID || !privateKeyString) {
       throw new Error(`Missing APNs environment variables: keyID=${!!keyID}, teamID=${!!teamID}, bundleID=${!!bundleID}, key=${!!privateKeyString}`)
     }
-
-    console.log(`[Debug] APNs config: keyID=${keyID}, teamID=${teamID}, bundleID=${bundleID}, keyLength=${privateKeyString.length}`)
 
     const ecPrivateKey = await jose.importPKCS8(privateKeyString, 'ES256')
     const jwt = await new jose.SignJWT({ iss: teamID, iat: Math.floor(Date.now() / 1000) })
@@ -157,27 +167,55 @@ serve(async (req) => {
         })
         
         if (res.ok) {
-          console.log(`[APNs] 送信成功 (env: ${apnsEnvironment}, user: ${t.user_id}, token: ...${deviceToken.slice(-6)})`)
+          console.log(`[APNs] 送信成功 (env: ${apnsEnvironment})`)
           return { success: true }
         } else {
-          const errText = await res.text()
-          console.log(`[APNs] 送信失敗 (status: ${res.status}): ${errText} (user: ${t.user_id}, token: ...${deviceToken.slice(-6)})`)
-          return { success: false, error: errText, status: res.status }
+          console.log(`[APNs] 送信失敗 (status: ${res.status})`)
+          return { success: false, status: res.status }
         }
-      } catch (e) {
-        console.error(`[APNs] ネットワークエラー: ${e.message}`)
-        return { success: false, error: e.message }
+      } catch {
+        console.error('[APNs] ネットワークエラー')
+        return { success: false }
       }
     }))
 
     return new Response(JSON.stringify({ 
       message: "Processing completed", 
       recipients: userIds.length,
-      tokens: tokens.length,
-      details: results
+      tokens: tokens.length
     }), { status: 200 })
-  } catch (error) {
-    console.error("Critical Error:", error.message)
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+  } catch {
+    console.error("Critical Error")
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 })
   }
 })
+
+function constantTimeEquals(a: string, b: string): boolean {
+  const encoder = new TextEncoder()
+  const left = encoder.encode(a)
+  const right = encoder.encode(b)
+
+  if (left.length !== right.length) return false
+
+  let diff = 0
+  for (let index = 0; index < left.length; index++) {
+    diff |= left[index] ^ right[index]
+  }
+
+  return diff === 0
+}
+
+function getSupabaseAdminKey(): string {
+  const secretKeys = Deno.env.get('SUPABASE_SECRET_KEYS')
+  if (secretKeys) {
+    try {
+      const parsed = JSON.parse(secretKeys) as Record<string, string>
+      const defaultKey = parsed.default?.trim()
+      if (defaultKey) return defaultKey
+    } catch {
+      console.warn('[Notification] Failed to parse SUPABASE_SECRET_KEYS')
+    }
+  }
+
+  return Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim() ?? ''
+}

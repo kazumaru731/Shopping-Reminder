@@ -25,8 +25,6 @@ struct ShoppingReminderApp: App {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(.systemBackground))
-                } else if supabase.isPasswordRecovery {
-                    PasswordUpdateView()
                 } else if supabase.currentUser != nil {
                     GroupListView()
                         .onAppear {
@@ -41,27 +39,12 @@ struct ShoppingReminderApp: App {
                             }
                         }
                 } else {
-                    LoginView()
+                    OnboardingView()
                 }
             }
             .environment(\.locale, Locale(identifier: "ja_JP"))
             .onAppear {
                 NotificationManager.shared.requestPushPermission()
-            }
-            .onOpenURL { url in
-                supabase.handleOpenURL(url)
-            }
-            .alert("エラー", isPresented: .init(
-                get: { supabase.authError != nil },
-                set: { if !$0 { supabase.authError = nil } }
-            )) {
-                Button("OK", role: .cancel) {
-                    supabase.authError = nil
-                }
-            } message: {
-                if let error = supabase.authError {
-                    Text(error)
-                }
             }
         }
     }
@@ -79,7 +62,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         #if DEBUG
-        print("DEBUG: Remote notification registration failed: \(error)")
+        SecureLog.debug("DEBUG: Remote notification registration failed")
         #endif
     }
 

@@ -144,7 +144,7 @@ class GroupListViewModel: ObservableObject {
             self.groups = try await SupabaseService.shared.fetchGroups()
         } catch {
             #if DEBUG
-            print("Failed to load groups: \(error)")
+            SecureLog.debug("Failed to load groups")
             #endif
         }
     }
@@ -167,19 +167,19 @@ class GroupListViewModel: ObservableObject {
             do {
                 try await channel.subscribeWithError()
                 #if DEBUG
-                print("DEBUG: Subscribed to group_members changes for user: \(userId)")
+                SecureLog.debug("DEBUG: Subscribed to group member changes")
                 #endif
             } catch {
                 #if DEBUG
-                print("DEBUG: Subscription error: \(error)")
+                SecureLog.debug("DEBUG: Subscription error")
                 #endif
             }
         }
         
         Task {
-            for await change in changes {
+            for await _ in changes {
                 #if DEBUG
-                print("DEBUG: Group member change received: \(change)")
+                SecureLog.debug("DEBUG: Group member change received")
                 #endif
                 await loadGroups()
             }
@@ -193,7 +193,7 @@ class GroupListViewModel: ObservableObject {
             await loadGroups()
         } catch {
             #if DEBUG
-            print("Error creating group: \(error)")
+            SecureLog.debug("Error creating group")
             #endif
         }
     }
@@ -228,7 +228,7 @@ class GroupListViewModel: ObservableObject {
                 self.errorMessage = "グループが見つからないか、取得に失敗しました。正しいIDまたは招待コードを入力してください。"
                 self.showingError = true
                 #if DEBUG
-                print("Error checking code: \(error)")
+                SecureLog.debug("Error checking code")
                 #endif
             }
         }
@@ -244,7 +244,7 @@ class GroupListViewModel: ObservableObject {
                 self.showingError = true
             }
             #if DEBUG
-            print("Error joining group: \(error)")
+            SecureLog.debug("Error joining group")
             #endif
         }
     }
@@ -255,7 +255,7 @@ class GroupListViewModel: ObservableObject {
             await loadGroups()
         } catch {
             #if DEBUG
-            print("Error leaving group: \(error)")
+            SecureLog.debug("Error leaving group")
             #endif
         }
     }

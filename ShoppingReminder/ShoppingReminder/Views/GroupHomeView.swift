@@ -170,7 +170,7 @@ class GroupHomeViewModel: ObservableObject {
         do {
             self.members = try await SupabaseService.shared.fetchGroupMembers(groupId: groupId)
         } catch {
-            print("Failed to load members: \(error)")
+            SecureLog.debug("Failed to load members")
         }
     }
     
@@ -187,7 +187,7 @@ class GroupHomeViewModel: ObservableObject {
                 NotificationManager.shared.syncNotifications(for: targetedLists)
             }
         } catch {
-            print("Failed to load lists: \(error)")
+            SecureLog.debug("Failed to load lists")
         }
     }
 
@@ -207,15 +207,15 @@ class GroupHomeViewModel: ObservableObject {
         Task {
             do {
                 try await channel.subscribeWithError()
-                print("DEBUG: Subscribed to lists changes for group: \(groupId)")
+                SecureLog.debug("DEBUG: Subscribed to lists changes")
             } catch {
-                print("DEBUG: Subscription error: \(error)")
+                SecureLog.debug("DEBUG: Subscription error")
             }
         }
         
         Task {
-            for await change in changes {
-                print("DEBUG: List change received: \(change)")
+            for await _ in changes {
+                SecureLog.debug("DEBUG: List change received")
                 await loadLists(groupId: groupId)
             }
         }
@@ -236,7 +236,7 @@ class GroupHomeViewModel: ObservableObject {
             }
             await loadLists(groupId: groupId)
         } catch {
-            print("Error creating list: \(error)")
+            SecureLog.debug("Error creating list")
         }
     }
     
@@ -247,7 +247,7 @@ class GroupHomeViewModel: ObservableObject {
             // ローカル通知のキャンセル
             NotificationManager.shared.cancelNotification(for: list)
         } catch {
-            print("Error deleting list: \(error)")
+            SecureLog.debug("Error deleting list")
         }
     }
 }

@@ -235,7 +235,7 @@ struct AddItemView: View {
             self.members = try await SupabaseService.shared.fetchGroupMembers(groupId: list.groupId)
         } catch {
             #if DEBUG
-            print("Failed to load members: \(error)")
+            SecureLog.debug("Failed to load members")
             #endif
         }
     }
@@ -285,7 +285,7 @@ struct AddItemView: View {
             }
         } catch {
             #if DEBUG
-            print("Failed to upload image: \(error)")
+            SecureLog.debug("Failed to upload image")
             #endif
         }
     }

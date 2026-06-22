@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      getSupabaseAdminKey()
     )
 
     const retentionDays = 3
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       .lt("updated_at", cutoffDate)
 
     if (fetchError) {
-      throw new Error(`Failed to fetch target items: ${fetchError.message}`)
+      throw new Error("Failed to fetch target items")
     }
 
     const itemCount = targetItems?.length ?? 0
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
       if (storageError) {
         // 画像削除の失敗はアイテム削除をブロックしない（孤児ファイルは許容）
-        console.warn(`[Cleanup] Storage削除の一部失敗: ${storageError.message}`)
+        console.warn("[Cleanup] Storage削除の一部失敗")
       } else {
         removedImageCount = imagePaths.length
         console.log(`[Cleanup] Storage画像を${removedImageCount}件削除`)
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       .in("id", targetIds)
 
     if (deleteError) {
-      throw new Error(`Failed to delete items: ${deleteError.message}`)
+      throw new Error("Failed to delete items")
     }
 
     console.log(`[Cleanup] 完了: アイテム${count}件削除, 画像${removedImageCount}件削除`)
@@ -78,9 +78,9 @@ Deno.serve(async (req) => {
         headers: { "Content-Type": "application/json" },
       }
     )
-  } catch (error) {
-    console.error("[Cleanup] 致命的エラー:", error.message)
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch {
+    console.error("[Cleanup] 致命的エラー")
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     })
@@ -100,4 +100,19 @@ function extractStoragePath(imageUrl: string | null): string | null {
   } catch {
     return null
   }
+}
+
+function getSupabaseAdminKey(): string {
+  const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS")
+  if (secretKeys) {
+    try {
+      const parsed = JSON.parse(secretKeys) as Record<string, string>
+      const defaultKey = parsed.default?.trim()
+      if (defaultKey) return defaultKey
+    } catch {
+      console.warn("[Cleanup] Failed to parse SUPABASE_SECRET_KEYS")
+    }
+  }
+
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim() ?? ""
 }
